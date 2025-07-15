@@ -1,0 +1,34 @@
+library(Biostrings)
+
+checker <- function(csv_file) {
+csv <- read.delim(csv_file, header = TRUE, sep = ",")
+counter = 0
+
+for(i in 1:nrow(csv)){
+   raw_dna <- csv[i,7]
+   strand <- csv[i,4]
+   aa <- csv[i,2]
+
+   dna <- DNAString(raw_dna)
+   
+   if (strand == "-"){
+   my_aaobj <- translate(reverseComplement(dna), no.init.codon = TRUE)
+} else {
+   my_aaobj <- translate(dna, no.init.codon = TRUE)
+} 
+ my_aa <- tolower(toString(my_aaobj))
+
+
+   if (my_aa == aa){
+   counter = counter + 1
+} else {
+ print(i)
+}
+}
+  
+
+percentage <- (counter/(nrow(csv)) * 100)
+   print(paste("This csv file has a", percentage, "% match between its translated mapped codons and its aligned file proteins"))
+   
+}
+
