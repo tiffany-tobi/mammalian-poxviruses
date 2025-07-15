@@ -1,0 +1,42 @@
+##### conserbation of sites within cppv ##########
+
+#!/usr/bin/python3
+
+import csv
+from Bio import AlignIO
+from collections import defaultdict
+
+alignment = AlignIO.read("cppv_proteins.aln.fasta", "fasta")
+
+# Define your capripoxvirus samples
+lsdv_id = ["KX894508_proteins"]  # Replace with your actual sequence IDs
+
+# Create lists of sequences for each group
+lsdv_seq = [seq for seq in alignment if seq.id in lsdv_id]
+non_lsdv_seqs = [seq for seq in alignment if seq.id not in lsdv_id]
+
+type1_sites = []  # Conserved across all 3
+
+for i in range(alignment.get_alignment_length()):
+    lsdv_residues = [seq[i] for seq in lsdv_seq]
+    non_lsdv_residues = [seq[i] for seq in non_lsdv_seqs]
+    if len(set(lsdv_residues)) == 1:
+        lsdv_aa = lsdv_residues[0]
+        if lsdv_aa == '-':
+            continue
+    else:
+        continue
+    if all(res != '-' for res in non_lsdv_residues) and all(res == lsdv_aa for res in non_lsdv_residues):
+        non_lsdv_residues = set(non_lsdv_residues)
+        type1_sites.append((i + 1, lsdv_aa))
+        
+
+# Output summary statistics
+
+print(f"\n\nTotal 1 sites: {len(type1_sites)}")
+
+myfile = open('cppv_conservation.csv', mode='w') # write to CSV file
+writer = csv.writer(myfile) 
+for pos in type1_sites:
+    writer.writerow(pos)
+myfile.close
