@@ -1,0 +1,21 @@
+library(ape)
+library(ggtree)
+library(phytools)
+library(treeio)
+library(ggplot2)
+
+tree <- read.tree("nucleotide.raxml.bestTree")
+new_tree <- root(tree, outgroup = c("NC_035460.1"))
+old <- c("NC_016924.1", "NC_002642.1", "NC_005179.1", "NC_004002.1", "NC_004003.1", "KX894508.1",  "NC_001132.2", "NC_001266.1", "NC_003389.1", "NC_006966.1", "NC_035460.1", "NC_032111.1")
+new <- c("NC_016924 | Cotia virus SPAn232", "NC_002642 | Yaba like disease virus", "NC_005179 | Yaba monkey tumor virus", "NC_004002 | Sheeppox virus", "NC_004003 | Goatpox virus", "KX894508 | Lumpy skin disease virus",  "NC_001132 | Myxoma virus ", "NC_001266 | Rabbit fibroma virus", "NC_003389 | Swinepox virus", "NC_006966 | Deerpox virus", "NC_035460 | Eptesipox virus", "NC_032111 | BeAn 58058 virus")
+tip <- as.data.frame(cbind(label=old, nlabel=new))
+new_tree$tip.label <- tip[[2]][match(new_tree$tip.label, tip[[1]])]
+
+#plot tree
+ggtree(new_tree) + 
+geom_treescale(0,0) + 
+geom_tiplab(hjust = 0, size = 4) + 
+coord_cartesian(clip = 'off') + 
+theme_tree2(plot.margin=margin(8,90,8,8)) +
+ggtitle("Nucleotide level phylogenetic tree using model GTR+I+G4") + 
+theme(plot.title = element_text(hjust = 0.5))

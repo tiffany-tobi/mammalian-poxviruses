@@ -1,0 +1,24 @@
+library(ape)
+library(ggtree)
+library(phytools)
+library(treeio)
+library(ggplot2)
+
+tree <- read.tree("proteins.raxml.bestTree")
+new_tree <- root(tree, outgroup = c("NC_035460_proteins"))
+old <- c("NC_004003_proteins", "NC_005179_proteins", "NC_002642_proteins", "NC_035460_proteins", "NC_006966_proteins", "NC_032111_proteins", "NC_016924_proteins", "NC_001266_proteins", "NC_001132_proteins", "NC_003389_proteins", "KX894508_proteins", "NC_004002_proteins")
+new <- c("NC_004003 | Goatpox virus", "NC_005179 | Yaba monkey tumor virus ", "NC_002642 | Yaba like disease virus", "NC_035460 | Eptesipox virus", "NC_006966 | Deerpox virus", "NC_032111 | BeAn 5050 virus", "NC_016924 | Cotia virus SPAn232", "NC_001266 | Rabbit fibroma virus", "NC_001132 | Myxoma virus", "NC_003389 | Swinepox virus", "KX894508 | Lumpy skin disease virus", "NC_004002 | Sheeppox virus")
+tip <- as.data.frame(cbind(label=old, nlabel=new))
+new_tree$tip.label <- tip[[2]][match(new_tree$tip.label, tip[[1]])]
+
+#plot tree
+ggtree(new_tree) + 
+geom_treescale(0,0) + 
+geom_tiplab(hjust = 0, size = 4) + 
+coord_cartesian(clip = 'off') + 
+theme_tree2(plot.margin=margin(8,120,8,8)) +
+ggtitle("Protein level phylogenetic tree using model JTT+I+G4+F") + 
+theme(plot.title = element_text(hjust = 0.5))
+
+
+
