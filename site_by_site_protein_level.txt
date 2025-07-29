@@ -123,10 +123,12 @@ results[[i]] <- percentage
 results_df <- data.frame(matrix(unlist(results), nrow=length(aln$KX894508_proteins), byrow=TRUE))
 colnames(results_df)[1] <- "Percentage"
 results_df$site <- c(1:length(aln$KX894508_proteins))
+results_df$site <- results_df$site/1000
 
 #plot
 ggplot(results_df, aes(x= site, y = Percentage)) +
  geom_bar(stat="identity") + 
- labs(x = "Site", y = "%") +
+ scale_x_continuous(breaks = seq(0, 80, 5)) +
+ labs(x = "Sites (kb)", y = "% of Poxviruses with a real protein") +
  ggtitle("Site by site analysis of real amino acids aligned by mafft E-INS-I") + 
 theme(plot.title = element_text(hjust = 0.5))
