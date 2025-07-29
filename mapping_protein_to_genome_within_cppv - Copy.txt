@@ -1,0 +1,135 @@
+
+library(seqinr)
+library(stringr)
+library(dplyr)
+
+####### inputs for within CPPV #############
+
+aln <- seqinr::read.fasta(file = "cppv_proteins.aln.fasta")	# reads in alignment file
+KX89 <- aln$KX89
+
+aln.string <- seqinr::read.fasta(file = "cppv_proteins.aln.fasta", as.string = TRUE) # reads in aln as string
+KX89_string <- aln.string$KX89
+
+####### general inputs ##########
+
+aa <- seqinr::read.fasta(file = "input.fasta")	#reads in unaligned protein file w/o stop codons
+KX89_aa <- aa$KX89
+ 
+tru_string <- seqinr::read.fasta(file = "proteins.fasta", as.string = TRUE)	#reads in unaligned protein file as string
+KX89_tru_string <- tru_string$KX89
+
+tru <- seqinr::read.fasta(file = "proteins.fasta")	#reads in unaligned protein file 
+KX89_tru <- tru$KX89
+
+nuc <- seqinr::read.fasta(file = "KX894508.1.fasta", as.string = TRUE) # reads in nucleotide fasta file
+
+
+########## setting up gff file ###############
+
+gff <- read.delim("KX894508_gff.csv", header = FALSE, sep = ",") #making the gff file for KX8
+gff_regions <- gff[, c(4,5)]
+gff_regions <- na.omit(gff_regions)
+
+difference <- apply(gff_regions, 1, diff)
+tru_difference <- lapply(difference, function(difference) difference + 1)
+pl <- lapply(tru_difference, function(tru_difference) tru_difference / 3)
+
+gff_regions <- gff[, c(4,5,7)]
+colnames(gff_regions)[1] <- "start"
+colnames(gff_regions)[2] <- "end"
+colnames(gff_regions)[3] <- "strand"
+gff_regions <- na.omit(gff_regions)
+gff_regions$protein_length <- unlist(pl)
+colnames(gff_regions)[4] <- "protein_length"
+
+gff_regions <- gff_regions %>% mutate(cumulative_protein_length = cumsum(protein_length))
+
+###### function ##########
+mapper <- function(conserved_sites_csv){
+
+sites <- read.delim(conserved_sites_csv, header = FALSE, sep = ",")
+
+results <- data.frame(protein_site=numeric(), protein=character(), gene=numeric(), strand=character(), codon_start=numeric(), codon_end=numeric(), codon=character())
+for(i in 1:nrow(sites)){
+ c <- sites[i,1]
+
+#real coordinate from alignment to unaligned w/o stop codon
+
+m <- substr(KX89_string, 1, c)
+m <- unlist(strsplit(m, split = ""))
+x <- c - length(which(m == "-"))
+
+
+#unaligned w/o stop codon to true alignment
+counter = 0
+for (i in 1:1000000) {
+  if(isTRUE(KX89_tru[i] == "*")== TRUE) { 
+    counter
+  }
+  else {
+    counter = counter + 1
+  }
+  if (counter == (x)) {
+    w <- i
+    assign("w", i, envir = .GlobalEnv)     
+  }
+}
+
+protein_site <- w
+
+protein <- KX89_aa[x]
+
+#which gene
+
+g = (w - x) + 1 
+gene <- g
+
+#determining coords
+if (g == 1) {
+cp = 0
+} else {
+cp <- gff_regions[w-x, 5]
+}
+
+ 
+
+if (w != cp){
+  protein_index <- w - cp - 1
+ start <- gff_regions[g, 1]
+ end <- gff_regions[g, 2]
+ strand <- gff_regions[g, 3]
+
+if (strand == "+") {
+  codon_start <- start + (protein_index * 3)
+  codon_end <- codon_start + 2
+} else {
+  codon_end <- end - (protein_index * 3)
+  codon_start <- codon_end - 2
+} 
+} else {
+  protein_index <- 0
+gene <- w-x
+start <- gff_regions[w-x, 1]
+ end <- gff_regions[w-x, 2]
+ strand <- gff_regions[w-x, 3]
+
+if (strand == "+") {
+  codon_start <- end - 5
+  codon_end <- codon_start + 2
+} else {
+  codon_start <- start + 3
+  codon_end <- codon_start + 2
+} 
+}
+
+
+#codon sequence 
+codon <- substr(nuc, codon_start, codon_end)
+
+results <- rbind(results, data.frame(protein_site=protein_site, protein=protein, gene=gene, strand=strand, codon_start=codon_start, codon_end=codon_end, codon=codon))
+
+}
+
+write.csv(results, "mapped_cppv_within.csv", row.names=FALSE)
+}
