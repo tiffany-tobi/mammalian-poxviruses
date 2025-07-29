@@ -1,63 +1,8 @@
 library(seqinr)          
-library(EnvNJ) 
-library(BiocManager) 
-library(GenomicRanges)
-library(filesstrings)
 library(dplyr)
 library(stringr)
 library(ggplot2)
 
-aln <- seqinr::read.fasta(file = "combined_aln.fasta", as.string = TRUE) #read in aln file i had concatenated as a fasta file as string
-aln_no <- seqinr::read.fasta(file = "combined_aln.fasta")   #read in aln file as a vector single characters
-aln.e <- seqinr::read.fasta(file = "combined_einsi_aln.fasta", as.string = TRUE)
-KX8 <- aln_no$KX8      #reads in only KX894508 vector seq
-KX89 <- aln$KX89
-KX89.e <- aln.e$KX89
-
-write.dna (KX89, file="KX894508_aln.fasta", format="fasta", append=F, nbcol=10, colsep="", colw=nchar(KX89), indent = NULL)
-
-total <- str_count(KX89)
-a <- str_count(KX89, "a")
-t <- str_count(KX89, "t")
-c <- str_count(KX89, "c")
-g <- str_count(KX89, "g")
-m <- str_count(KX89, "m")
-r <- str_count(KX89, "r")
-y <- str_count(KX89, "y")
-w <- str_count(KX89, "w")
-dash <- str_count(KX89, "-")
-real <- a + t + c + g
-not <- total - real
-real.fraction <- real/total
-not.fraction <- 1 - real.fraction
-
-total.e <- str_count(KX89.e)
-a.e <- str_count(KX89.e, "a")
-t.e <- str_count(KX89.e, "t")
-c.e <- str_count(KX89.e, "c")
-g.e <- str_count(KX89.e, "g")
-m.e <- str_count(KX89.e, "m")
-r.e <- str_count(KX89.e, "r")
-y.e <- str_count(KX89.e, "y")
-w.e <- str_count(KX89.e, "w")
-dash.e <- str_count(KX89.e, "-")
-real.e <- a.e + t.e + c.e + g.e
-not.e <- total.e - real.e
-real.fraction.e <- real.e/total.e
-not.fraction.e <- 1 - real.fraction.e
- 
-#plotting the graph
-model <- c(rep("mafft", 2), rep("mafft-einsi", 2))
-base <- c("real", "unreal", "real", "unreal")
-fraction <- c(real.fraction, not.fraction, real.fraction.e, not.fraction.e)
-data <- data.frame(model, base, fraction)
-
-KX8.plot <- ggplot(data, aes(fill=base, y = fraction, x = model)) +
-	geom_bar(position="stack", stat="identity") + 
-	ggtitle("Site by Site Analysis of KX894508.1") + 
- 	theme(plot.title = element_text(hjust = 0.5))
-
-#GO BACK TO THE COUNT
 aln <- seqinr::read.fasta(file = "combined_aln.fasta")	
 aln.e <- seqinr::read.fasta(file = "combined_einsi_aln.fasta")
 
@@ -299,12 +244,14 @@ results[[i]] <- percentage
 results_df <- data.frame(matrix(unlist(results), nrow=233516, byrow=TRUE))
 colnames(results_df)[1] <- "Percentage"
 results_df$site <- c(1:233516)
+results_df$site <- results_df$site/1000
 
 
 #plot
 ggplot(results_df, aes(x= site, y = Percentage)) +
  geom_bar(stat="identity") + 
- labs(x = "Site", y = "%") +
+ scale_x_continuous(breaks = seq(0, 235, 5)) +
+ labs(x = "Sites (kb)", y = "% of Poxviruses with a real base") +
  ggtitle("Site by site analysis of real bases aligned by mafft") + 
 theme(plot.title = element_text(hjust = 0.5))
 
@@ -515,11 +462,12 @@ results.einsi[[i]] <- percentage
 results.einsi_df <- data.frame(matrix(unlist(results.einsi), nrow=236447, byrow=TRUE))
 colnames(results.einsi_df)[1] <- "Percentage"
 results.einsi_df$site <- c(1:236447)
-
+results.einsi_df$site <- results.einsi_df$site/1000
 
 #plot
 ggplot(results.einsi_df, aes(x= site, y = Percentage)) +
  geom_bar(stat="identity") + 
- labs(x = "Site", y = "%") +
+ scale_x_continuous(breaks = seq(0, 235, 5)) +
+ labs(x = "Sites (kb)", y = "% of Poxviruses with a real base") +
  ggtitle("Site by site analysis of real bases aligned by mafft E-INS-I") + 
 theme(plot.title = element_text(hjust = 0.5))
