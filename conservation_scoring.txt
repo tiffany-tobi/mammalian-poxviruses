@@ -1,0 +1,80 @@
+library(dplyr)
+library(ggplot2)
+
+####### setting up gff ###############
+gff <- read.delim("KX894508_gff.csv", header = FALSE, sep = ",") #making the gff file for KX8
+gff_regions <- gff[, c(4,5)]
+gff_regions <- na.omit(gff_regions)
+
+difference <- apply(gff_regions, 1, diff)
+tru_difference <- lapply(difference, function(difference) difference + 1)
+pl <- lapply(tru_difference, function(tru_difference) (tru_difference / 3) - 1)
+
+gff_regions <- gff[, c(4,5,7)]
+colnames(gff_regions)[1] <- "start"
+colnames(gff_regions)[2] <- "end"
+colnames(gff_regions)[3] <- "strand"
+gff_regions <- na.omit(gff_regions)
+gff_regions$protein_length <- unlist(pl)
+colnames(gff_regions)[4] <- "protein_length"
+
+
+############ uniqueness ###############
+against <- read.delim("mapped_cppv_against_pv.csv", header = TRUE, sep = ",")
+
+n_against <- against %>% add_count(gene) %>% filter() %>% distinct()
+n_against <- n_against[, c(3,8)]
+n_against <- unique(n_against)
+
+gene <- n_against$gene
+x <- n_against$n
+tpl <- gff_regions[g,]
+tpl <- tpl$protein_length
+df <- data.frame(g, x, tpl)
+
+raw_score <- apply(df, 2, function(row) df[,2]/df[,3])
+raw_score <- data.frame(raw_score)
+percent_unique <- raw_score$x * 100
+
+final <- data.frame(g, x, tpl, percent_unique)
+colnames(final)[1] <- "gene"
+top_ten <- final[order(-final$percent_unique),]
+top_ten <- top_ten[1:10,]
+bottom_ten <- final[order(final$percent_unique),]
+bottom_ten <- bottom_ten[1:10,]
+
+############# conservation #############
+within <- read.delim("mapped_cppv_within.csv", header = TRUE, sep = ",")
+
+n_within <- within %>% add_count(gene) %>% filter() %>% distinct()
+n_within <- n_within[, c(3,8)]
+n_within <- unique(n_within)
+
+gene <- n_within$gene
+x_within <- n_within$n
+tpl_within <- gff_regions[gene,]
+tpl_within <- tpl_within$protein_length
+df_within <- data.frame(gene, x_within, tpl_within)
+
+raw_score_within <- apply(df_within, 2, function(row) df_within[,2]/df_within[,3])
+raw_score_within <- data.frame(raw_score_within)
+percent_conserved <- raw_score_within$x_within * 100
+
+final_within <- data.frame(gene, x_within, tpl_within, percent_conserved)
+top_ten_within <- final_within[order(-final_within$percent_conserved),]
+top_ten_within <- top_ten_within[1:10,]
+bottom_ten_within <- final_within[order(final_within$percent_conserved),]
+bottom_ten_within <- bottom_ten_within[1:10,]
+
+all_genes <- c(1:157)
+no_conservation_within <- all_genes[!all_genes %in% gene]
+
+################# scatter plot ################
+merged <- merge(final, final_within, by=c("gene"))
+merged <- merged %>% select(-one_of('x', 'tpl', 'x_within', 'tpl_within'))
+merged$true_gene <- c("LSDV001", "LSDV003", "LSDV005", "LSDV006", "LSDV007", "LSDV008", "LSDV010", "LSDV011", "LSDV015", "LSDV017", "LSDV018", "LSDV019a", "LSDV020", "LSDV021", "LSDV022", "LSDV023", "LSDV024", "LSDV025", "LSDV027", "LSDV028", "LSDV028.5", "LSDV029", "LSDV030", "LSDV031", "LSDV032", "LSDV033", "LSDV034", "LSDV036", "LSDV037", "LSDV038", "LSDV039", "LSDV040", "LSDV041", "LSDV042", "LSDV043", "LSDV044", "LSDV045", "LSDV046", "LSDV047", "LSDV048", "LSDV049", "LSDV050", "LSDV052", "LSDV051", "LSDV053", "LSDV054", "LSDV055", "LSDV056", "LSDV057", "LSDV058", "LSDV059", "LSDV060", "LSDV061", "LSDV062", "LSDV063", "LSDV064", "LSDV065", "LSDV066", "LSDV067", "LSDV068", "LSDV070", "LSDV071", "LSDV072", "LSDV073", "LSDV074", "LSDV075", "LSDV076", "LSDV077", "LSDV078", "LSDV079", "LSDV080", "LSDV081", "LSDV082", "LSDV083", "LSDV084", "LSDV085", "LSDV086", "LSDV087", "LSDV088", "LSDV089", "LSDV090", "LSDV091", "LSDV092", "LSDV093", "LSDV094", "LSDV095", "LSDV096", "LSDV097", "LSDV098", "LSDV099", "LSDV100", "LSDV101", "LSDV102", "LSDV103", "LSDV105", "LSDV107", "LSDV108", "LSDV109", "LSDV110", "LSDV111", "LSDV112", "LSDV114", "LSDV115", "LSDV116", "LSDV117", "LSDV118", "LSDV119", "LSDV120", "LSDV121", "LSDV122", "LSDV123", "LSDV124", "LSDV125", "LSDV126", "LSDV127", "LSDV128", "LSDV134", "LSDV135", "LSDV137", "LSDV138", "LSDV139", "LSDV140", "LSDV141", "LSDV142", "LSDV143", "LSDV144", "LSDV145", "LSDV147", "LSDV149", "LSDV151", "LSDV152", "LSDV154", "LSDV156")
+
+ggplot(merged, aes(x=percent_conserved, y = percent_unique, label = true_gene)) +
+geom_text(check_overlap = TRUE) + 
+labs(x = "% Conserved", y = "% Unique")
+
