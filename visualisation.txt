@@ -10,9 +10,13 @@ genes <- data.frame(start, end, strand)
 genes$ymin <- ifelse(genes$strand == "+", 0.05, -0.05)
 genes$ymax <- ifelse(genes$strand == "+", 0.15, 0.05)
 
-
+###### against ######
 coord_a <- against$codon_start
 coord_b <- against$codon_end
+
+###### within #####
+coord_a <- within$codon_start
+coord_b <- within$codon_end
 
 inner <- list()
 for(i in 1:length(coord_b)){
@@ -40,7 +44,7 @@ result$coord <- result$coord/1000
 plot <- ggplot(result, aes(x= coord, y = pa)) +
  geom_bar(stat="identity") + 
  scale_x_continuous(breaks = seq(0, 150, 5)) +
- labs(x = "Genome Position (kb)", y = "Conserved") +
+ labs(x = "Genome Position (kb)", y = "Unique") +
  coord_cartesian(ylim = c(0,0.5)) +
  ggtitle("Genomic conservation of protein sites unique to CPPV") + 
 theme(plot.title = element_text(hjust = 0.5)) +
@@ -58,5 +62,5 @@ theme(axis.text.y=element_blank(),
         axis.ticks.y=element_blank()  
         )
 
-x <- plot / to_gene + plot_layout(heights = c(2,0.5))
+plot / to_gene + plot_layout(heights = c(2,0.5))
 
