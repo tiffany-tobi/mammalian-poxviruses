@@ -1,5 +1,7 @@
 library(dplyr)
 library(ggplot2)
+library(patchwork)
+
 
 ####### setting up gff ###############
 gff <- read.delim("KX894508_gff.csv", header = FALSE, sep = ",") #making the gff file for KX8
@@ -74,7 +76,26 @@ merged <- merge(final, final_within, by=c("gene"))
 merged <- merged %>% select(-one_of('x', 'tpl', 'x_within', 'tpl_within'))
 merged$true_gene <- c("LSDV001", "LSDV003", "LSDV005", "LSDV006", "LSDV007", "LSDV008", "LSDV010", "LSDV011", "LSDV015", "LSDV017", "LSDV018", "LSDV019a", "LSDV020", "LSDV021", "LSDV022", "LSDV023", "LSDV024", "LSDV025", "LSDV027", "LSDV028", "LSDV028.5", "LSDV029", "LSDV030", "LSDV031", "LSDV032", "LSDV033", "LSDV034", "LSDV036", "LSDV037", "LSDV038", "LSDV039", "LSDV040", "LSDV041", "LSDV042", "LSDV043", "LSDV044", "LSDV045", "LSDV046", "LSDV047", "LSDV048", "LSDV049", "LSDV050", "LSDV052", "LSDV051", "LSDV053", "LSDV054", "LSDV055", "LSDV056", "LSDV057", "LSDV058", "LSDV059", "LSDV060", "LSDV061", "LSDV062", "LSDV063", "LSDV064", "LSDV065", "LSDV066", "LSDV067", "LSDV068", "LSDV070", "LSDV071", "LSDV072", "LSDV073", "LSDV074", "LSDV075", "LSDV076", "LSDV077", "LSDV078", "LSDV079", "LSDV080", "LSDV081", "LSDV082", "LSDV083", "LSDV084", "LSDV085", "LSDV086", "LSDV087", "LSDV088", "LSDV089", "LSDV090", "LSDV091", "LSDV092", "LSDV093", "LSDV094", "LSDV095", "LSDV096", "LSDV097", "LSDV098", "LSDV099", "LSDV100", "LSDV101", "LSDV102", "LSDV103", "LSDV105", "LSDV107", "LSDV108", "LSDV109", "LSDV110", "LSDV111", "LSDV112", "LSDV114", "LSDV115", "LSDV116", "LSDV117", "LSDV118", "LSDV119", "LSDV120", "LSDV121", "LSDV122", "LSDV123", "LSDV124", "LSDV125", "LSDV126", "LSDV127", "LSDV128", "LSDV134", "LSDV135", "LSDV137", "LSDV138", "LSDV139", "LSDV140", "LSDV141", "LSDV142", "LSDV143", "LSDV144", "LSDV145", "LSDV147", "LSDV149", "LSDV151", "LSDV152", "LSDV154", "LSDV156")
 
-ggplot(merged, aes(x=percent_conserved, y = percent_unique, label = true_gene)) +
-geom_text(check_overlap = TRUE) + 
+plot1 <- ggplot(merged, aes(x=percent_conserved, y=percent_unique)) +
+geom_point(alpha = 0.5) +
+geom_text(data=subset(merged, percent_unique > 25 | percent_conserved < 77),
+ aes(percent_conserved, percent_unique, label=true_gene),
+ nudge_y = 1.5,
+ size = 4) + 
+scale_x_continuous(limits = c(0, 100)) +
+scale_y_continuous(limits = c(0, 100)) +
 labs(x = "% Conserved", y = "% Unique")
+
+plot2 <- ggplot(merged, aes(x=percent_conserved, y=percent_unique)) +
+geom_point(alpha = 0.5) +
+geom_text(data=subset(merged, percent_unique < 25 | percent_conserved > 77),
+ aes(percent_conserved, percent_unique, label=true_gene),
+ check_overlap =TRUE,
+ size = 4,
+ nudge_y = 0.3) + 
+scale_x_continuous(limits = c(77, 100)) +
+scale_y_continuous(limits = c(0, 25)) +
+labs(x = "% Conserved", y = "% Unique")
+
+plot1 + plot2
 
